@@ -37,32 +37,44 @@ job_json = {
         "max_concurrent_runs": 1,
         "tags": {
             "usage": "solacc_testing",
-            "group": "SOLACC"
+            "group": "RCG"
         },
         "tasks": [
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "intermittent_forecast_cluster",
                 "notebook_task": {
-                    "notebook_path": f"01_Introduction_And_Setup"
+                    "notebook_path": f"00_Intro & Config"
                 },
-                "task_key": "sample_solacc_01"
+                "task_key": "intermittent_forecast_01"
             },
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "intermittent_forecast_cluster",
                 "notebook_task": {
-                    "notebook_path": f"02_Analysis"
+                    "notebook_path": f"01_Prepare Data"
                 },
-                "task_key": "sample_solacc_02",
+                "task_key": "intermittent_forecast_02",
                 "depends_on": [
                     {
-                        "task_key": "sample_solacc_01"
+                        "task_key": "intermittent_forecast_01"
+                    }
+                ]
+            },
+            {
+                "job_cluster_key": "intermittent_forecast_cluster",
+                "notebook_task": {
+                    "notebook_path": f"02_Generate Store-Item Forecasts"
+                },
+                "task_key": "intermittent_forecast_03",
+                "depends_on": [
+                    {
+                        "task_key": "intermittent_forecast_02"
                     }
                 ]
             }
         ],
         "job_clusters": [
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "intermittent_forecast_cluster",
                 "new_cluster": {
                     "spark_version": "11.3.x-cpu-ml-scala2.12",
                 "spark_conf": {
