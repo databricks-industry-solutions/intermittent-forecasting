@@ -80,7 +80,7 @@ job_json = {
                 "spark_conf": {
                     "spark.databricks.delta.formatCheck.enabled": "false"
                     },
-                    "num_workers": 2,
+                    "num_workers": 10,
                     "node_type_id": {"AWS": "i3.xlarge", "MSA": "Standard_DS3_v2", "GCP": "n1-highmem-4"},
                     "custom_tags": {
                         "usage": "solacc_testing"
