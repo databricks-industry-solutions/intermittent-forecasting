@@ -5,9 +5,6 @@ In order to capture localized patterns of demand, more and more organizations ar
 In this solution accelerator, we'll leverage historical daily data for a large number of store-item combinations within which numerous periods of zero-unit sales are observed in order to explore how we might overcome this challenge.  We will make use of the [Nixtla statsforecast library](https://github.com/Nixtla/statsforecast) which has support for numerous models specialized for intermittent demand forecasting and which has a built-in backend for scaling the training of large numbers of models across a Databricks cluster.
 
 ___
-<john.doe@databricks.com>
-
-___
 
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the [Databricks License](https://databricks.com/db-license-source).  All included or referenced third party libraries are subject to the licenses set forth below.
 
