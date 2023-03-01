@@ -5,7 +5,7 @@
 
 # MAGIC %md ##Introduction
 # MAGIC 
-# MAGIC In our examination of the Nixtla forecasting libraries, we will make use of the [M5 competition](https://mofc.unic.ac.cy/m5-competition/) dataset provided by Walmart. This dataset is interesting for its scale but also the fact that it features many timeseries with infrequent occurances.  Such timeseries are common in retail scenarios and are difficult for traditional timeseries forecasting techniques to address. But before we can make use of this dataset, we need to download it and re-align its structure to what is expected by most of the timeseries libraries available today, including Nixtla. 
+# MAGIC In our examination of the Nixtla forecasting libraries, we will make use of the [M5 competition](https://mofc.unic.ac.cy/m5-competition/) dataset provided by Walmart. This dataset is interesting for its scale but also the fact that it features many timeseries with infrequent occurrences.  Such timeseries are common in retail scenarios and are difficult for traditional timeseries forecasting techniques to address. But before we can make use of this dataset, we need to download it and re-align its structure to what is expected by most of the timeseries libraries available today, including Nixtla. 
 
 # COMMAND ----------
 

@@ -92,7 +92,7 @@ display(
 
 # COMMAND ----------
 
-# MAGIC %md Using a visualizaiton, it can be difficult to appreciate the number of missing observations in the dataset.  Here we calculate the number of dates for which a zero-units sales value is observed for each store-item combination and calculate a ratio of zero-value observations to total observations.  For the timeseries above, 67% of the observations are zero-values which is pretty close to the average of 68% across all timeseries in the dataset: 
+# MAGIC %md Using a visualization, it can be difficult to appreciate the number of missing observations in the dataset.  Here we calculate the number of dates for which a zero-units sales value is observed for each store-item combination and calculate a ratio of zero-value observations to total observations.  For the timeseries above, 67% of the observations are zero-values which is pretty close to the average of 68% across all timeseries in the dataset: 
 
 # COMMAND ----------
 
@@ -145,7 +145,7 @@ y_pred
 
 # COMMAND ----------
 
-# MAGIC %md The [naive model](https://nixtla.github.io/statsforecast/models.html#naive) simply repeats the last value in the historical dataset as the forecasted value.  While not a particularlly robust forecast, it will provide us a nice baseline against which our other models can be compared.
+# MAGIC %md The [naive model](https://nixtla.github.io/statsforecast/models.html#naive) simply repeats the last value in the historical dataset as the forecasted value.  While not a particularly robust forecast, it will provide us a nice baseline against which our other models can be compared.
 # MAGIC 
 # MAGIC To evaluate our forecast, we need to grab the actual values for the 28 day period over which we are forecasting:
 
@@ -301,9 +301,9 @@ def evaluate_forecasts(y_true, y_pred):
 
 # COMMAND ----------
 
-# MAGIC %md The function above deserves a bit of an explaination. Upon receiving actuals and forecasts Spark dataframes, the two are joined on store-item and date, and for each forecast (model) column found in the forecasts dataframe, the error between the forecast and actuals is calculated.  
+# MAGIC %md The function above deserves a bit of an explanation. Upon receiving actuals and forecasts Spark dataframes, the two are joined on store-item and date, and for each forecast (model) column found in the forecasts dataframe, the error between the forecast and actuals is calculated.  
 # MAGIC 
-# MAGIC The routine then generates the definitions for each of the evaulation metrics to be derived for each forecast.  These definitions, all of which employ aggregations, are captured in a list.  When we then group our data by store-item, *e.g.* *unique_id*, these can be applied by submitting them to the aggregation method as a list to be unpacked (per the asterisk preceding the list argument).
+# MAGIC The routine then generates the definitions for each of the evaluation metrics to be derived for each forecast.  These definitions, all of which employ aggregations, are captured in a list.  When we then group our data by store-item, *e.g.* *unique_id*, these can be applied by submitting them to the aggregation method as a list to be unpacked (per the asterisk preceding the list argument).
 # MAGIC 
 # MAGIC With that, let's now take a look at the evaluation results:
 
@@ -318,7 +318,7 @@ display(
 
 # COMMAND ----------
 
-# MAGIC %md In scenarios such as this when we are generating a large number of forecasts, we will occassionally want to summarize the metrics to get a sense for how each model performs on average.  As each store-item forecast is based on the same number of input dates, we can simply apply an average to each metric:
+# MAGIC %md In scenarios such as this when we are generating a large number of forecasts, we will occasionally want to summarize the metrics to get a sense for how each model performs on average.  As each store-item forecast is based on the same number of input dates, we can simply apply an average to each metric:
 
 # COMMAND ----------
 
@@ -345,7 +345,7 @@ def summarize_evaluation_metrics(evaluation_results):
       .withColumn('name', fn.expr("split(name,'_')"))
       .withColumn('model', fn.expr("array_join(slice(name,-2, size(name)-1),'_')")) # extract model from metric name
       .withColumn('metric', fn.expr("slice(name,-1, 1)[0]")) # extract metric from metric name
-      .groupBy('model') # pivot data to put model on rows and metrics across volumns
+      .groupBy('model') # pivot data to put model on rows and metrics across columns
         .pivot('metric')
           .agg(fn.first('value'))
       )
@@ -364,10 +364,10 @@ display(
 
 # MAGIC %md ##Step 3: Evaluate Intermittent Models
 # MAGIC 
-# MAGIC Having established a baseline, we now turn our attention to constructing a proper forecast. The statsforecast library makes available a wide range of model types, [many of which](https://nixtla.github.io/statsforecast/models.html#sparse-or-intermittent) are equiped to handle the intermittent values issues associated with our dataset.  Some models we might consider are:
+# MAGIC Having established a baseline, we now turn our attention to constructing a proper forecast. The statsforecast library makes available a wide range of model types, [many of which](https://nixtla.github.io/statsforecast/models.html#sparse-or-intermittent) are equipped to handle the intermittent values issues associated with our dataset.  Some models we might consider are:
 # MAGIC </p>
 # MAGIC 
-# MAGIC * [ADIDA](https://link.springer.com/article/10.1057/jors.2010.32) - Aggregate-Dissagregate Intermittent Demand Approach to forecasting
+# MAGIC * [ADIDA](https://link.springer.com/article/10.1057/jors.2010.32) - Aggregate-Disaggregate Intermittent Demand Approach to forecasting
 # MAGIC * [IMAPA](https://kourentzes.com/forecasting/2014/04/19/multiple-aggregation-prediction-algorithm-mapa/) - Intermittent Multiple Aggregation Prediction Algorithm
 # MAGIC * [CrostonClassic](https://www.jstor.org/stable/3007885?origin=crossref) - Classic Croston forecasting
 # MAGIC * CrostonOptimized - Croston forecasting with optimized smoothing parameter selection
@@ -376,9 +376,9 @@ display(
 # MAGIC 
 # MAGIC To employ these different models, we simply specify a list of model types in our call to the Fugue backend.  Where we wish to specify configuration parameters, we can do so with each model instance.  In addition, we can specify a fallback model to provide values should we encounter a problem with any one of these models.
 # MAGIC 
-# MAGIC **NOTE** The statsforecast libary comes equiped with many more [models](](https://nixtla.github.io/statsforecast/models.html) than the ones enumerated here, some of which may be appropraite in other scenarios.
+# MAGIC **NOTE** The statsforecast library comes equipped with many more [models](](https://nixtla.github.io/statsforecast/models.html) than the ones enumerated here, some of which may be appropriate in other scenarios.
 # MAGIC 
-# MAGIC As we specify different models to try, its important to keep in mind that each model will be required to generate 30K+ forecasts.  During the development cycle, we may wish to explore a wide variety of models but as we move towards a prodution deployment which will run frequently, often within tight processing windows, we will typically narrow our focus to the most promising algorithms:
+# MAGIC As we specify different models to try, its important to keep in mind that each model will be required to generate 30K+ forecasts.  During the development cycle, we may wish to explore a wide variety of models but as we move towards a production deployment which will run frequently, often within tight processing windows, we will typically narrow our focus to the most promising algorithms:
 
 # COMMAND ----------
 
@@ -529,7 +529,7 @@ display(best_model_per_series)
 
 # COMMAND ----------
 
-# MAGIC %md We now have identified the best model for each store-item combination.  In effect, we've automated a *bake-off* between models which can allow us to find the best approach for a given scenario.  But out of curiousity, were there any standouts in terms of model performance across these entries?:
+# MAGIC %md We now have identified the best model for each store-item combination.  In effect, we've automated a *bake-off* between models which can allow us to find the best approach for a given scenario.  But out of curiosity, were there any standouts in terms of model performance across these entries?:
 
 # COMMAND ----------
 
@@ -545,7 +545,7 @@ display(
 
 # COMMAND ----------
 
-# MAGIC %md For these data, ADIDA was the most frequently selected *best* model with *IMAPA* in a respectible second-place position meaning that there's no clear *one approach* to generating these forecasts that will work well across all store-item combinations.  Interestingly, the Naive model did pretty well for quite a few products.  It's likely for these that there are sizeable gaps in purchases and/or no clear pattern behind purchase events to indicate a more sophisticated approach.
+# MAGIC %md For these data, ADIDA was the most frequently selected *best* model with *IMAPA* in a respectable second-place position meaning that there's no clear *one approach* to generating these forecasts that will work well across all store-item combinations.  Interestingly, the Naive model did pretty well for quite a few products.  It's likely for these that there are sizeable gaps in purchases and/or no clear pattern behind purchase events to indicate a more sophisticated approach.
 
 # COMMAND ----------
 
@@ -647,7 +647,7 @@ display( spark.table('forecasts') )
 
 # MAGIC %md #BONUS: How Frequently Should You Generate Forecasts?
 # MAGIC 
-# MAGIC A common question that comes up in forecasting is how often should we generate new forecasts.  Many organizations take advantage of the lastest data and the speed and scalability offered by the cloud to regenerate forecasts on a daily basis or even more often. But is that necessary? The answer to that question depends on the speed at which the performance of you forecasts degrade over time.  
+# MAGIC A common question that comes up in forecasting is how often should we generate new forecasts.  Many organizations take advantage of the latest data and the speed and scalability offered by the cloud to regenerate forecasts on a daily basis or even more often. But is that necessary? The answer to that question depends on the speed at which the performance of you forecasts degrade over time.  
 # MAGIC 
 # MAGIC The further out any forecast goes, the more inaccurate that forecast tends to be. Some forecasts degrade in accuracy slowly and some degrade much more rapidly.  To evaluate the pace at which our store-item forecasts degrade, we can repeat our cross-validation work across multiple horizons and step-sizes and then use the results to observe how accuracy degrades over time.
 # MAGIC 
@@ -670,7 +670,7 @@ def get_pipeline_generation_evaluation(forecast_frequency, test_size, models):
       n_windows=None
     )
     
-    # calcualte evalaution metrics
+    # calculate evaluation metrics
     evaluation_metrics_cv = evaluate_forecasts(
       y_pred_cv.select(fn.col('unique_id'), fn.col('ds'), fn.col('y')), # true values for each window
       y_pred_cv.drop('y', 'cutoff') # forecast of each model
@@ -707,7 +707,7 @@ display(results)
 
 # COMMAND ----------
 
-# MAGIC %md From the results, we can see that on average the RMSE associated with our forecasts rise a bit between the 1 day and 7 day forecast interval.  The pace of degredation then appears to slow as we look further out up to the 28 day interval.  The decision as to whether to regenerate forecasts daily, weekly or monthly is therefore more a matter of business tolerance of slightly higher inaccuracy relative to the cost of running more frequent forecast generation cycles.
+# MAGIC %md From the results, we can see that on average the RMSE associated with our forecasts rise a bit between the 1 day and 7 day forecast interval.  The pace of degradation then appears to slow as we look further out up to the 28 day interval.  The decision as to whether to regenerate forecasts daily, weekly or monthly is therefore more a matter of business tolerance of slightly higher inaccuracy relative to the cost of running more frequent forecast generation cycles.
 
 # COMMAND ----------
 
