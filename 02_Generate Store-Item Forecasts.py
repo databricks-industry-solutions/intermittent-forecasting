@@ -10,7 +10,7 @@
 # COMMAND ----------
 
 # DBTITLE 1,Install Required Libraries
-# MAGIC %pip install "statsforecast[fugue]"
+# MAGIC %pip install "statsforecast[fugue]==1.4.0"
 
 # COMMAND ----------
 
