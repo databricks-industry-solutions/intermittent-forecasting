@@ -4,7 +4,7 @@
 # COMMAND ----------
 
 # MAGIC %md ## Introduction
-# MAGIC 
+# MAGIC
 # MAGIC In this notebook, we want to walk through the typical steps organizations employ in developing forecasts at the store-item level. The dataset we are using features data for products sold across several store locations at a daily level for a roughly 5 year period.  A key feature of this set is that many of the items have no sales on numerous days, a common characteristics of such data when observed at a low level of granularity.  In order to build forecasts at the store-item, we will need to employ techniques specifically designed to deal with intermittent (sporadic) values.
 
 # COMMAND ----------
@@ -32,7 +32,7 @@ import pandas as pd
 # COMMAND ----------
 
 # MAGIC %md ##Step 1: Explore the Timeseries Data
-# MAGIC 
+# MAGIC
 # MAGIC To get started, let's examine the structure of the dataset.  As mentioned above, this data contains a wide number of products in different store locations.  We have combined the store and item identifiers into a single field named *unique_id* which we can break down as follows to identify not just the store and item but the state within which a store resides and the category and department associated with a given product:
 
 # COMMAND ----------
@@ -52,7 +52,7 @@ store_items = (
     .drop('parts')
   ).cache()
 
-display(store_items.orderBy('unique_id'))
+display(store_items.orderBy('unique_id').limit(100))
 
 # COMMAND ----------
 
@@ -76,14 +76,14 @@ display(
 # COMMAND ----------
 
 # MAGIC %md From our analysis, we can see we have 3,049 unique products across 10 store locations which will require us to generate 30,490 store-item level forecasts.  The products are aligned across 3 categories and 7 departments, and the stores are found in 3 US states.
-# MAGIC 
+# MAGIC
 # MAGIC Examining one of the timeseries in the dataset, *i.e.* *FOODS_1_001_TX_1* or product 1 in department 1 within the foods category residing in store 1 in the state of Texas, we can see an example of the intermittent sales mentioned above.  While we are only observing one of the store-item combinations with this query, this pattern of days with zero sales is frequently observed across all store-item combinations in this dataset:
 
 # COMMAND ----------
 
 # DBTITLE 1,Show Timeseries Values for One Store-Item Combination
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC SELECT ds, y
 # MAGIC FROM sales_train_evaluation
 # MAGIC WHERE unique_id='FOODS_1_001_TX_1'
@@ -98,7 +98,7 @@ display(
 
 # DBTITLE 1,Calculate Ratio of Zero-Value Observations
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC SELECT
 # MAGIC   unique_id,
 # MAGIC   COUNT(*) as obs,
@@ -111,7 +111,7 @@ display(
 # COMMAND ----------
 
 # MAGIC %md ##Step 2: Evaluate Baseline Model
-# MAGIC 
+# MAGIC
 # MAGIC To establish a baseline for evaluating our forecasts, we will generate a simple, naive model.  We will do this for one product in one location to get oriented to how Nixtla generates forecasts before then scaling forecast generation across all 30K+ store-item combinations in the dataset:
 
 # COMMAND ----------
@@ -146,7 +146,7 @@ y_pred
 # COMMAND ----------
 
 # MAGIC %md The [naive model](https://nixtla.github.io/statsforecast/models.html#naive) simply repeats the last value in the historical dataset as the forecasted value.  While not a particularly robust forecast, it will provide us a nice baseline against which our other models can be compared.
-# MAGIC 
+# MAGIC
 # MAGIC To evaluate our forecast, we need to grab the actual values for the 28 day period over which we are forecasting:
 
 # COMMAND ----------
@@ -191,7 +191,7 @@ display(
 # COMMAND ----------
 
 # MAGIC %md With the mechanics of producing a single forecast under our belts, let's use the Nixtla Fugue backend to generate a naive forecast for all store-item combinations in our dataset.  To do this, we'll first grab all the historical data to a Spark dataframe:
-# MAGIC 
+# MAGIC
 # MAGIC **NOTE** The dataset should have three fields, one of which identifies the timeseries, another which provides the date and a final field which provides the observed value on that date.
 
 # COMMAND ----------
@@ -202,7 +202,7 @@ y_hist = (
     .table('sales_train_evaluation')
   )
 
-display(y_hist)
+display(y_hist.limit(100))
 
 # COMMAND ----------
 
@@ -216,7 +216,7 @@ backend = FugueBackend(spark, {'fugue.spark.use_pandas_udf':True})
 # COMMAND ----------
 
 # MAGIC %md Now we can fit all 30K+ models and generate forecasts with a simple call to the backend:
-# MAGIC 
+# MAGIC
 # MAGIC **NOTE** The amount of time it takes to complete a scaled-out forecast such as this depends on the number of processors available across the worker nodes in your cluster.  Scale up and down the number of worker nodes and the number of processors per node to lower or increase the amount of time it takes to complete a scaled-out forecast.
 
 # COMMAND ----------
@@ -235,7 +235,7 @@ y_pred = sf.forecast(
 
 # display results
 display(
-  y_pred.orderBy('unique_id','ds')
+  y_pred.orderBy('unique_id','ds').limit(100)
   )
 
 # COMMAND ----------
@@ -250,7 +250,7 @@ y_true = (
     .table('sales_test_evaluation')
   )
 
-display(y_true)
+display(y_true.limit(100))
 
 # COMMAND ----------
 
@@ -302,9 +302,9 @@ def evaluate_forecasts(y_true, y_pred):
 # COMMAND ----------
 
 # MAGIC %md The function above deserves a bit of an explanation. Upon receiving actuals and forecasts Spark dataframes, the two are joined on store-item and date, and for each forecast (model) column found in the forecasts dataframe, the error between the forecast and actuals is calculated.  
-# MAGIC 
+# MAGIC
 # MAGIC The routine then generates the definitions for each of the evaluation metrics to be derived for each forecast.  These definitions, all of which employ aggregations, are captured in a list.  When we then group our data by store-item, *e.g.* *unique_id*, these can be applied by submitting them to the aggregation method as a list to be unpacked (per the asterisk preceding the list argument).
-# MAGIC 
+# MAGIC
 # MAGIC With that, let's now take a look at the evaluation results:
 
 # COMMAND ----------
@@ -313,7 +313,7 @@ def evaluate_forecasts(y_true, y_pred):
 evaluation_metrics = evaluate_forecasts(y_true, y_pred)
 
 display( 
-  evaluation_metrics.orderBy('unique_id') 
+  evaluation_metrics.orderBy('unique_id').limit(100) 
   )
 
 # COMMAND ----------
@@ -363,21 +363,21 @@ display(
 # COMMAND ----------
 
 # MAGIC %md ##Step 3: Evaluate Intermittent Models
-# MAGIC 
+# MAGIC
 # MAGIC Having established a baseline, we now turn our attention to constructing a proper forecast. The statsforecast library makes available a wide range of model types, [many of which](https://nixtla.github.io/statsforecast/models.html#sparse-or-intermittent) are equipped to handle the intermittent values issues associated with our dataset.  Some models we might consider are:
 # MAGIC </p>
-# MAGIC 
+# MAGIC
 # MAGIC * [ADIDA](https://link.springer.com/article/10.1057/jors.2010.32) - Aggregate-Disaggregate Intermittent Demand Approach to forecasting
 # MAGIC * [IMAPA](https://kourentzes.com/forecasting/2014/04/19/multiple-aggregation-prediction-algorithm-mapa/) - Intermittent Multiple Aggregation Prediction Algorithm
 # MAGIC * [CrostonClassic](https://www.jstor.org/stable/3007885?origin=crossref) - Classic Croston forecasting
 # MAGIC * CrostonOptimized - Croston forecasting with optimized smoothing parameter selection
 # MAGIC * [TSB](https://www.sciencedirect.com/science/article/abs/pii/S0377221711004437) - Teunter-Syntetos-Babai modification of Croston’s method that replaces the inter-demand intervals with demand probability
 # MAGIC </p>
-# MAGIC 
+# MAGIC
 # MAGIC To employ these different models, we simply specify a list of model types in our call to the Fugue backend.  Where we wish to specify configuration parameters, we can do so with each model instance.  In addition, we can specify a fallback model to provide values should we encounter a problem with any one of these models.
-# MAGIC 
+# MAGIC
 # MAGIC **NOTE** The statsforecast library comes equipped with many more [models](](https://nixtla.github.io/statsforecast/models.html) than the ones enumerated here, some of which may be appropriate in other scenarios.
-# MAGIC 
+# MAGIC
 # MAGIC As we specify different models to try, its important to keep in mind that each model will be required to generate 30K+ forecasts.  During the development cycle, we may wish to explore a wide variety of models but as we move towards a production deployment which will run frequently, often within tight processing windows, we will typically narrow our focus to the most promising algorithms:
 
 # COMMAND ----------
@@ -399,7 +399,7 @@ y_pred = sf.forecast(
     h=28
   )
 
-display(y_pred.orderBy('unique_id','ds'))
+display(y_pred.orderBy('unique_id','ds').limit(100))
 
 # COMMAND ----------
 
@@ -410,7 +410,7 @@ display(y_pred.orderBy('unique_id','ds'))
 # DBTITLE 1,Evaluate Individual Forecasts
 evaluation_metrics = evaluate_forecasts(y_true, y_pred)
 
-display(evaluation_metrics)
+display(evaluation_metrics.limit(100))
 
 # COMMAND ----------
 
@@ -422,14 +422,14 @@ display(summary_results)
 # COMMAND ----------
 
 # MAGIC %md ##Step 4: Perform Cross Validation
-# MAGIC 
+# MAGIC
 # MAGIC In previous steps, we've taken all our historical data and used it to predict a fixed future period.  In some ways, this mirrors a traditional train-test split with our historical data serving as the training set and our 28-day actuals serving as the testing set.  Much like in a traditional model training scenario, we want to make sure our model performs well across a range of inputs and isn't just performing well in the presence of a lucky split.  A cross-validation is often used for this where we shuffle our data across a number of folds and perform repeated evaluations where one fold serves as the test set and the remaining is used for training until each fold has an opportunity to serve as the test set.
-# MAGIC 
+# MAGIC
 # MAGIC With timeseries data, we can't just shuffle our records the same way, so instead, we often implement cross-validation by defining a sliding window across the historical data and predict the period following it. This form of cross-validation allows us to arrive at a better estimation of our model's predictive abilities across a wider range of instances while also keeping the data in the training set contiguous as is required by our models:
 # MAGIC </p>
-# MAGIC 
+# MAGIC
 # MAGIC ![Alt Text](https://raw.githubusercontent.com/Nixtla/statsforecast/main/nbs/imgs/ChainedWindows.gif)
-# MAGIC 
+# MAGIC
 # MAGIC Cross-validation of timeseries models is considered a best practice but most implementations are very slow.  The statsforecast library implements cross-validation as a distributed operation, making the process less time consuming to perform:
 
 # COMMAND ----------
@@ -458,12 +458,12 @@ y_pred_cv = sf.cross_validation(
     n_windows=4
   )
 
-display(y_pred_cv.orderBy('unique_id','ds'))
+display(y_pred_cv.orderBy('unique_id','ds').limit(100))
 
 # COMMAND ----------
 
 # MAGIC %md  The cross-validation method call is very similar to the call used to generate our original forecasts.  We are again forecasting over a 28 day horizon as indicated by the *h* and *freq* parameters, respectively.  We are defining our training window to be equal to 4 steps, as indicated by the *n_windows* parameter.  Each step is defined as 28 days in length (*step_size*).  With each iteration of the cross-validation, the window is moved forward 1 step until the dataset is exhausted.
-# MAGIC 
+# MAGIC
 # MAGIC Comparing the model predictions to actuals for each window, we can generate evaluation metrics as follows:
 
 # COMMAND ----------
@@ -475,7 +475,7 @@ evaluation_metrics_cv = evaluate_forecasts(
 )
  
 display( 
-  evaluation_metrics_cv.orderBy('unique_id') 
+  evaluation_metrics_cv.orderBy('unique_id').limit(100) 
  )
 
 # COMMAND ----------
@@ -488,7 +488,7 @@ display(summary_results_cv)
 # COMMAND ----------
 
 # MAGIC %md ## Step 5: Select Best Model
-# MAGIC 
+# MAGIC
 # MAGIC We've now explored multiple models using multiple evaluation metrics leveraging multiple evaluation techniques. Now we need to choose the *best* model for a given store-item combination.  To do this, we need to decide on which metric we will use to define *best* and examine our evaluation results for that metric:
 
 # COMMAND ----------
@@ -525,7 +525,7 @@ def get_best_model_per_series(evaluation_results, metric):
 # DBTITLE 1,Get Best Model per Store-Item using RMSE
 best_model_per_series = get_best_model_per_series(evaluation_metrics_cv, 'rmse')
 
-display(best_model_per_series)
+display(best_model_per_series.limit(100))
 
 # COMMAND ----------
 
@@ -550,7 +550,7 @@ display(
 # COMMAND ----------
 
 # MAGIC %md ##Step 6: Generate Final Forecast
-# MAGIC 
+# MAGIC
 # MAGIC With our best model selected for each store-item, we can now generate our final forecast.  We've been using a train-test split of our data in our evaluation, but the reality is that we always are forecasting over periods for which we don't have actuals.  To simulate this, let's combine the training and testing datasets to bring us up to the end of the period for which we have known values:
 
 # COMMAND ----------
@@ -566,7 +566,7 @@ y_hist_full = (
     .orderBy('unique_id','ds')
   )
 
-display(y_hist_full)
+display(y_hist_full.limit(100))
 
 # COMMAND ----------
 
@@ -591,7 +591,7 @@ forecasts = sf.forecast(
     h=28
 )
 
-display(forecasts.orderBy('unique_id','ds'))
+display(forecasts.orderBy('unique_id','ds').limit(100))
 
 # COMMAND ----------
 
@@ -641,18 +641,18 @@ _ = (
     .saveAsTable('forecasts')
   )
 
-display( spark.table('forecasts') )
+display( spark.table('forecasts').limit(100) )
 
 # COMMAND ----------
 
 # MAGIC %md #BONUS: How Frequently Should You Generate Forecasts?
-# MAGIC 
+# MAGIC
 # MAGIC A common question that comes up in forecasting is how often should we generate new forecasts.  Many organizations take advantage of the latest data and the speed and scalability offered by the cloud to regenerate forecasts on a daily basis or even more often. But is that necessary? The answer to that question depends on the speed at which the performance of you forecasts degrade over time.  
-# MAGIC 
+# MAGIC
 # MAGIC The further out any forecast goes, the more inaccurate that forecast tends to be. Some forecasts degrade in accuracy slowly and some degrade much more rapidly.  To evaluate the pace at which our store-item forecasts degrade, we can repeat our cross-validation work across multiple horizons and step-sizes and then use the results to observe how accuracy degrades over time.
-# MAGIC 
+# MAGIC
 # MAGIC Please note the *test_size* argument in the command below specifies that forecasts will be created at the specified frequency until the forecasting period (specified by the *freq* and *h* arguments) is exhausted. For example, if a 28-day forecast is called for, a test_size of 7 will trigger a new 7 day forecast every 7-days until the 28-day period is completed:
-# MAGIC 
+# MAGIC
 # MAGIC **NOTE** These next steps will take a while to complete given the large number for computational cycles involved.  This is a step you should perform periodically but not as part of a day-to-day forecasting cycle.
 
 # COMMAND ----------
@@ -703,7 +703,7 @@ for frequency in frequencies:
     results = results.unionAll(df)
 
 
-display(results)
+display(results.limit(100))
 
 # COMMAND ----------
 
@@ -712,9 +712,9 @@ display(results)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the [Databricks License](https://databricks.com/db-license-source).  All included or referenced third party libraries are subject to the licenses set forth below.
-# MAGIC 
+# MAGIC
 # MAGIC | library                                | description             | license    | source                                              |
 # MAGIC |----------------------------------------|-------------------------|------------|-----------------------------------------------------|
 # MAGIC | statsforecast| Lightning fast forecasting with statistical and econometric models | Apache 2.0 | https://github.com/Nixtla/statsforecast |
