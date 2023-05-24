@@ -10,7 +10,8 @@
 # COMMAND ----------
 
 # DBTITLE 1,Install Required Libraries
-# MAGIC %pip install "statsforecast[fugue]==1.4.0"
+# MAGIC %pip install -U pandas==1.5.3 "statsforecast[fugue]==1.4.0"
+# MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
