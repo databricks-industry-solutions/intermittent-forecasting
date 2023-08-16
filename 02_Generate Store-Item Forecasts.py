@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %md The purpose of this notebook is generate store-item level forecasts as part of the Nixtla intermittent forecasting solution accelerator. You may also find this accelerator notebook at https://github.com/databricks-industry-solutions/intermittent-forecasting.git.
+# MAGIC %md The purpose of this notebook is generate store-item level forecasts as part of the Nixtla intermittent forecasting solution accelerator. You may also find this accelerator notebook at https://github.com/databricks-industry-solutions/intermittent-forecasting.git. For more information about forecasting solution accelerators, visit https://www.databricks.com/solutions/accelerators/demand-forecasting.
 
 # COMMAND ----------
 

@@ -1,18 +1,18 @@
 # Databricks notebook source
-# MAGIC %md The purpose of this notebook is provide an introduction to the Nixtla intermittent demand forecasting solution accelerator and to provide access to the configuration values that support it. You may also find this accelerator notebook at https://github.com/databricks-industry-solutions/intermittent-forecasting.git.
+# MAGIC %md The purpose of this notebook is provide an introduction to the Nixtla intermittent demand forecasting solution accelerator and to provide access to the configuration values that support it. You may find this accelerator notebook at https://github.com/databricks-industry-solutions/intermittent-forecasting.git. For more information about forecasting solution accelerators, visit https://www.databricks.com/solutions/accelerators/demand-forecasting.
 
 # COMMAND ----------
 
 # MAGIC %md ##Introduction
-# MAGIC 
+# MAGIC
 # MAGIC In order to capture localized patterns of demand, more and more organizations are generating forecasts at the store-item level.  Working at this level of granularity not only explodes the number of forecasts we need to produce, it frequently presents us with timeseries containing numerous periods of zero-unit demand.  Commonly used models are simply inappropriate for such timeseries, requiring us to turn to specialized algorithms built for intermittent (sparse) timeseries.
-# MAGIC 
+# MAGIC
 # MAGIC In this solution accelerator, we'll leverage historical daily data for a large number of store-item combinations within which numerous periods of zero-unit sales are observed in order to explore how we might overcome this challenge.  We will make use of the [Nixtla statsforecast library](https://github.com/Nixtla/statsforecast) which has support for numerous models specialized for intermittent demand forecasting and which has a built-in backend for scaling the training of large numbers of models across a Databricks cluster.
 
 # COMMAND ----------
 
 # MAGIC %md ##Configuration
-# MAGIC 
+# MAGIC
 # MAGIC The following values are used to set consistent configurations across the notebooks that make up this accelerator:
 
 # COMMAND ----------
@@ -47,9 +47,9 @@ config['mount path'] = '/tmp/nixtla'
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the [Databricks License](https://databricks.com/db-license-source).  All included or referenced third party libraries are subject to the licenses set forth below.
-# MAGIC 
+# MAGIC
 # MAGIC | library                                | description             | license    | source                                              |
 # MAGIC |----------------------------------------|-------------------------|------------|-----------------------------------------------------|
 # MAGIC | statsforecast| Lightning fast forecasting with statistical and econometric models | Apache 2.0 | https://github.com/Nixtla/statsforecast |
